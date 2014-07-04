@@ -9,10 +9,14 @@
 #import "NTWViewController.h"
 @import Social;  // Import the Social Framework
 
-@interface NTWViewController () <UITextViewDelegate>
+@interface NTWViewController () <UITextViewDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIActionSheetDelegate>
+{
+    UIImage *tweetImage;
+}
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *tweetButton;
 @property (weak, nonatomic) IBOutlet UILabel *characterCountLabel;
 @property (weak, nonatomic) IBOutlet UITextView *tweetTextView;
+@property (weak, nonatomic) IBOutlet UIImageView *thumbImage;
 
 @end
 
@@ -25,6 +29,41 @@ static int kNTWCharacterLimit = 140;
     [super viewDidLoad];
     self.characterCountLabel.text = [NSString stringWithFormat:@"%d", kNTWCharacterLimit];
     self.tweetTextView.delegate = self;
+}
+
+- (IBAction)showPicker:(id)sender {
+    if ([UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceFront]) {   // iOS Device Code
+    UIActionSheet *actionSheet = [[UIActionSheet alloc]
+                                  initWithTitle:@"Tweet Image"
+                                  delegate:self
+                                  cancelButtonTitle:@"Cancel"
+                                  destructiveButtonTitle:nil
+                                  otherButtonTitles:@"Take new photo", @"Use existing", nil];
+        [actionSheet showInView:self.view];
+    } else {   // iOS Simulator Code
+        UIImagePickerController *pickerController = [[UIImagePickerController alloc] init];
+        pickerController.delegate = self;
+        pickerController.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+        [self presentViewController:pickerController animated:YES completion:nil];
+    }
+}
+
+// UIActionSheetDelegate method: set image picker source type, depending on user's choice
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
+    UIImagePickerController *pickerController = [[UIImagePickerController alloc] init];
+    pickerController.delegate = self;
+    if (buttonIndex == actionSheet.firstOtherButtonIndex) {
+        pickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
+    } else {
+        pickerController.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+    }
+    [self presentViewController:pickerController animated:YES completion:NULL];
+}
+
+// UIImagePickerControllerDelegate method: capture selected/camera image
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    [self dismissViewControllerAnimated:YES completion:nil];
+    tweetImage = self.thumbImage.image = [info objectForKey:@"UIImagePickerControllerOriginalImage"];
 }
 
 #pragma mark - text view version
@@ -60,6 +99,11 @@ static int kNTWCharacterLimit = 140;
     NSString *message = self.tweetTextView.text;
     SLComposeViewController *composeViewController = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter];
     [composeViewController setInitialText:message];
+    if (tweetImage) {
+        [composeViewController addImage:tweetImage];
+        tweetImage = nil;
+        self.thumbImage.image = nil;
+    }
     [self presentViewController:composeViewController animated:YES completion:nil];
     
 //    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Posting tweet"
