@@ -7,6 +7,7 @@
 //
 
 #import "NTWViewController.h"
+@import Social;  // Import the Social Framework
 
 @interface NTWViewController () <UITextViewDelegate>
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *tweetButton;
@@ -57,12 +58,16 @@ static int kNTWCharacterLimit = 140;
     [self.tweetTextView resignFirstResponder];
     
     NSString *message = self.tweetTextView.text;
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Posting tweet"
-                                                    message:message
-                                                   delegate:nil
-                                          cancelButtonTitle:@"OK" otherButtonTitles:nil];
-    [alert show];
-    [self.presentingViewController dismissViewControllerAnimated:YES completion:NULL];
+    SLComposeViewController *composeViewController = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter];
+    [composeViewController setInitialText:message];
+    [self presentViewController:composeViewController animated:YES completion:nil];
+    
+//    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Posting tweet"
+//                                                    message:message
+//                                                   delegate:nil
+//                                          cancelButtonTitle:@"OK" otherButtonTitles:nil];
+//    [alert show];
+//    [self.presentingViewController dismissViewControllerAnimated:YES completion:NULL];
 }
 
 @end
